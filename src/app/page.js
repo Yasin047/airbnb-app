@@ -1,113 +1,237 @@
-import Image from 'next/image'
-
+"use client";
+import axios from "axios";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+const initialState = {
+  name: "",
+  email: "",
+  password: "",
+};
+const initialLoginState = {
+  email: "",
+  password: "",
+};
 export default function Home() {
+  const router = useRouter();
+  const [formState, setFormState] = useState({ ...initialState });
+  const [loginState, setLoginState] = useState({ ...initialLoginState });
+  const [loading, setLoading] = useState(false);
+  const [todo, setTodo] = useState("");
+  const [getTodo, setGetTodo] = useState("");
+  const [isUpdate, setIsUpdate] = useState("");
+  const [msg, setMsg] = useState("");
+
+  const handleChange = (e) => {
+    setFormState((prev) => {
+      return {
+        ...prev,
+        [e.target.name]: e.target.value,
+      };
+    });
+  };
+  const handleLoginChange = (e) => {
+    setLoginState((prev) => {
+      return {
+        ...prev,
+        [e.target.name]: e.target.value,
+      };
+    });
+  };
+  const handleSubmitForm = (e) => {
+    e.preventDefault();
+    const data = {
+      name: formState.name,
+      email: formState.email,
+      password: formState.password,
+    };
+    console.log(data);
+    const res = axios
+      .post("/api/register", data)
+      .then((res) => console.log(res))
+      .catch((error) => console.log(error));
+  };
+  const handleLoginForm = (e) => {
+    e.preventDefault();
+    const data = {
+      email: loginState.email,
+      password: loginState.password,
+    };
+    console.log(data);
+    signIn("credentials", {
+      ...data,
+      redirect: false,
+    }).then((callback) => {
+      if (callback?.ok) {
+        alert("User is logged In successfully!");
+        router.refresh();
+      }
+      if (callback?.error) {
+        console.log(callback.error);
+      }
+    });
+  };
+  const getAllTodos = () => {
+    const res = axios
+      .get("/api/todo")
+      .then((res) => setGetTodo(res?.data))
+      .catch((error) => console.log(error));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    if (isUpdate == "") {
+      if (todo.length > 2) {
+        const res = await axios
+          .post("/api/todo", { todo })
+          .then((res) => setMsg(res.data.msg))
+          .catch((error) => console.log(error));
+        getAllTodos();
+        setLoading(false);
+        setTodo("");
+      } else {
+        alert("please provide minimum 3 characters");
+      }
+    } else {
+      const res = await axios
+        .put("/api/todo", { id: isUpdate, todo })
+        .then((res) => setMsg(res.data.msg))
+        .catch((error) => console.log(error));
+      getAllTodos();
+      setLoading(false);
+      setIsUpdate("");
+      setTodo("");
+    }
+  };
+
+  const handleDelete = async (id) => {
+    const res = await axios
+      .delete("/api/todo", { id })
+      .then((res) => console.log(res))
+      .catch((error) => console.log(error));
+    getAllTodos();
+  };
+  const handleUpdate = ({ id, todo }) => {
+    setIsUpdate(id);
+    setTodo(todo);
+  };
+
+  useEffect(() => {
+    setLoading(true);
+    getAllTodos();
+    setLoading(false);
+  }, []);
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/app/page.js</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+    <div className=" w-full h-full">
+      <div>
+        <form onSubmit={handleSubmitForm}>
+          <input
+            className="h-12 w-80 outline-none"
+            type="text"
+            name="name"
+            value={formState.name}
+            onChange={handleChange}
+            placeholder="Name"
+          />
+          <input
+            className="h-12 w-80 outline-none"
+            type="email"
+            name="email"
+            value={formState.email}
+            onChange={handleChange}
+            placeholder="Email"
+          />
+          <input
+            className="h-12 w-80 outline-none"
+            type="password"
+            name="password"
+            value={formState.password}
+            onChange={handleChange}
+            placeholder="Password"
+          />
+          <button className="h-12 w-24 bg-black text-white">submit</button>
+        </form>
+      </div>
+      <div>
+        <form onSubmit={handleLoginForm}>
+          <input
+            className="h-12 w-80 outline-none"
+            type="email"
+            name="email"
+            value={loginState.email}
+            onChange={handleLoginChange}
+            placeholder="Email"
+          />
+          <input
+            className="h-12 w-80 outline-none"
+            type="password"
+            name="password"
+            value={loginState.password}
+            onChange={handleLoginChange}
+            placeholder="Password"
+          />
+          <button className="h-12 w-24 bg-black text-white">submit</button>
+        </form>
+      </div>
+      <div>
+        <h1 className="text-white w-80 h-[60px] flex justify-center items-center bg-blue-950 text-3xl font-bold mx-auto ">
+          Todo App
+        </h1>
+
+        <form
+          className="flex justify-center items-center mt-10"
+          onSubmit={handleSubmit}
+        >
+          <input
+            className="h-12 w-80 outline-none"
+            type="text"
+            value={todo}
+            onChange={(e) => setTodo(e.target.value)}
+          />
+          <button className="h-12 w-24 bg-black text-white">submit</button>
+        </form>
+        {
+          <div>
+            <h2 className=" text-center mt-10">
+              {loading ? "Loading..." : <div>{msg}</div>}
+            </h2>
+          </div>
+        }
+        <div className="mt-10">
+          {getTodo.length > 0 ? (
+            <>
+              {getTodo?.map(({ id, todo }) => (
+                <div
+                  key={id}
+                  className=" w-96 mx-auto flex justify-between items-center gap-10 mt-5 border-2 px-8 py-6"
+                >
+                  <div>{todo}</div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleUpdate({ id, todo })}
+                      className="h-12 w-24 bg-black text-white"
+                    >
+                      Update
+                    </button>
+                    <button
+                      onClick={() => handleDelete(id)}
+                      className="h-12 w-24 bg-black text-white"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </>
+          ) : (
+            <div className="text-center">
+              {loading ? "loading..." : "No todo found..."}
+            </div>
+          )}
         </div>
       </div>
-
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800 hover:dark:bg-opacity-30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore the Next.js 13 playground.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  )
+    </div>
+  );
 }
