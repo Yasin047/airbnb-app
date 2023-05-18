@@ -45,7 +45,6 @@ export default function Home() {
       email: formState.email,
       password: formState.password,
     };
-    console.log(data);
     const res = axios
       .post("/api/register", data)
       .then((res) => console.log(res))
@@ -57,7 +56,6 @@ export default function Home() {
       email: loginState.email,
       password: loginState.password,
     };
-    console.log(data);
     signIn("credentials", {
       ...data,
       redirect: false,

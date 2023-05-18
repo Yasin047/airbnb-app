@@ -2,7 +2,6 @@
 import { signIn, signOut } from "next-auth/react";
 
 const Navbar = ({ currentUser }) => {
-  console.log(currentUser);
   return (
     <div>
       {currentUser?.name}
