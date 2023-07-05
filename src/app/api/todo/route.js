@@ -47,3 +47,16 @@ export async function PUT(request) {
     msg: "Todo is updated successfully!",
   });
 }
+
+export async function DELETE(request) {
+  const body = await request.json();
+  const { id } = body;
+  if (!id) {
+    return NextResponse.error();
+  }
+  const todoID = await prisma.todo.delete({ where: { id } });
+
+  return NextResponse.json({
+    msg: "Todo is updated successfully!",
+  });
+}

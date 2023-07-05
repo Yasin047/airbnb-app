@@ -4,6 +4,7 @@ import { signIn, signOut } from "next-auth/react";
 const Navbar = ({ currentUser }) => {
   return (
     <div>
+      <h1 style={{ color: "white" }}>Yasin Mahmud Mazid</h1>
       {currentUser?.name}
       <div>{currentUser?.email}</div>
       <div>{currentUser?.role}</div>
